@@ -39,6 +39,8 @@ db = SQLAlchemy(app)
 
 # ----------------- DATABASE MODELS -----------------
 
+
+
 class Student(db.Model):
     __tablename__ = 'students'
 
@@ -242,10 +244,16 @@ def seed_sample_data():
         db.session.add_all([g1, g2, g3, g4, att1, att2, att3])
         db.session.commit()
 
+# Ensure database tables and sample data exist when imported by Gunicorn or run locally
+with app.app_context():
+    db.create_all()
+    seed_sample_data()
+
 # Context Processor for layout helpers
 @app.context_processor
 def inject_now():
     return {'now': datetime.now(timezone.utc)}
+
 
 # ----------------- ROUTES -----------------
 
