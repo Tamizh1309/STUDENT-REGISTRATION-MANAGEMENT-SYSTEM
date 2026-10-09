@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Student Registration Management System built with Flask, Bootstrap, Chart.js & MySQL/SQLite. Full CRUD operations, grades, attendance, and analytics.">
+    <title>{% block title %}Student Registration System{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Modern CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container-fluid max-width-container px-lg-4">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}" id="navBrand">
+                <div class="navbar-brand-icon">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <span>EduRegistrar</span>
+            </a>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}" id="navDashboard">
+                            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'list_students' %}active{% endif %}" href="{{ url_for('list_students') }}" id="navStudents">
+                            <i class="bi bi-people-fill"></i> Student Records
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'bulk_attendance' %}active{% endif %}" href="{{ url_for('bulk_attendance') }}" id="navAttendance">
+                            <i class="bi bi-calendar-check-fill"></i> Daily Attendance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'register_student' %}active{% endif %}" href="{{ url_for('register_student') }}" id="navRegister">
+                            <i class="bi bi-person-plus-fill"></i> Register Student
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                    <a href="{{ url_for('register_student') }}" class="btn btn-primary-custom" id="btnQuickRegister">
+                        <i class="bi bi-plus-lg"></i> New Registration
+                    </a>
+                    <button type="button" class="btn-theme-toggle" id="themeToggleBtn" title="Toggle Theme" aria-label="Toggle Theme">
+                        <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages Container -->
+    <div class="container-fluid max-width-container px-lg-4 mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show border-0 shadow-sm rounded-3 d-flex align-items-center gap-2 mb-3" role="alert">
+                        {% if category == 'success' %}
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        {% elif category == 'danger' %}
+                            <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                        {% else %}
+                            <i class="bi bi-info-circle-fill text-info fs-5"></i>
+                        {% endif %}
+                        <div>{{ message }}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="container-fluid max-width-container px-lg-4 py-4 flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4">
+        <div class="container">
+            <p class="mb-0 text-muted">
+                &copy; {{ now.year }} <strong>EduRegistrar</strong> - Advanced Student Registration &amp; Academic Management System.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Delete Confirmation Modal (Global) -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Deletion
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="mb-1 fs-6">Are you sure you want to permanently delete the student record for:</p>
+                    <h5 class="fw-bold text-primary mb-0 mt-2" id="deleteStudentName">Student Name</h5>
+                    <p class="text-muted small mt-2">This action cannot be undone and will erase all data, grades, and attendance records associated with this student.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteStudentForm" method="POST" action="">
+                        <button type="submit" class="btn btn-danger rounded-3 px-4 fw-semibold" id="btnConfirmDelete">
+                            <i class="bi bi-trash3-fill me-1"></i> Delete Record
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Main JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

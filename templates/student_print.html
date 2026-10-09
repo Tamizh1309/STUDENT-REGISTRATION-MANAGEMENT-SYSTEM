@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript & ID Card - {{ student.full_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; }
+        .print-container { max-width: 800px; margin: 40px auto; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .transcript-header { border-bottom: 2px solid #4f46e5; padding-bottom: 20px; margin-bottom: 30px; }
+        .id-card-preview { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; background: #f1f5f9; width: 340px; margin-bottom: 30px; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; }
+            .print-container { box-shadow: none; padding: 0; margin: 0; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print text-center pt-4">
+    <button onclick="window.print()" class="btn btn-primary fw-bold px-4 py-2">
+        <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+    </button>
+    <a href="{{ url_for('view_student', id=student.id) }}" class="btn btn-outline-secondary px-4 py-2 ms-2">
+        Back to Profile
+    </a>
+</div>
+
+<div class="print-container">
+    <div class="transcript-header d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold text-primary mb-1"><i class="bi bi-mortarboard-fill me-2"></i>EduRegistrar Institution</h2>
+            <p class="text-muted mb-0">Official Student Transcript & Academic Record</p>
+        </div>
+        <div class="text-end">
+            <h5 class="fw-bold mb-0">ID: {{ student.student_id }}</h5>
+            <div class="text-muted small">Issued: {{ now.strftime('%b %d, %Y') }}</div>
+        </div>
+    </div>
+
+    <!-- Student Bio Grid -->
+    <div class="row mb-4">
+        <div class="col-6">
+            <table class="table table-borderless table-sm mb-0">
+                <tr><th width="35%">Full Name:</th><td class="fw-bold">{{ student.full_name }}</td></tr>
+                <tr><th>Course:</th><td class="fw-bold text-primary">{{ student.course }}</td></tr>
+                <tr><th>Email:</th><td>{{ student.email }}</td></tr>
+                <tr><th>Phone:</th><td>{{ student.phone }}</td></tr>
+            </table>
+        </div>
+        <div class="col-6">
+            <table class="table table-borderless table-sm mb-0">
+                <tr><th width="35%">Gender:</th><td>{{ student.gender }}</td></tr>
+                <tr><th>Date of Birth:</th><td>{{ student.dob.strftime('%B %d, %Y') if student.dob else 'N/A' }}</td></tr>
+                <tr><th>Status:</th><td><span class="badge bg-success">{{ student.status }}</span></td></tr>
+                <tr><th>Cumulative GPA:</th><td class="fw-bold text-primary fs-5">{{ student.gpa }} / 4.0</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Academic Grades Table -->
+    <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-journal-bookmark-fill me-2 text-primary"></i>Academic Performance</h5>
+    <table class="table table-bordered align-middle mb-4">
+        <thead class="table-light">
+            <tr>
+                <th>Subject / Course Name</th>
+                <th>Semester</th>
+                <th>Marks Obtained</th>
+                <th>Max Marks</th>
+                <th>Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if grades %}
+                {% for g in grades %}
+                    <tr>
+                        <td class="fw-semibold">{{ g.subject_name }}</td>
+                        <td>{{ g.semester }}</td>
+                        <td>{{ g.marks_obtained }}</td>
+                        <td>{{ g.max_marks }}</td>
+                        <td><span class="badge bg-primary fs-6">{{ g.grade_letter }}</span></td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">No course grades recorded yet.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <!-- Financial Summary -->
+    <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-wallet2 me-2 text-primary"></i>Fee & Attendance Status</h5>
+    <div class="row">
+        <div class="col-6">
+            <p class="mb-1"><strong>Total Course Fee:</strong> ₹{{ "%.2f"|format(student.total_fee or 0) }}</p>
+            <p class="mb-1"><strong>Amount Paid:</strong> ₹{{ "%.2f"|format(student.paid_fee or 0) }}</p>
+            <p class="mb-0"><strong>Balance Pending:</strong> ₹{{ "%.2f"|format(student.pending_fee or 0) }}</p>
+        </div>
+        <div class="col-6">
+            <p class="mb-1"><strong>Overall Attendance:</strong> {{ student.attendance_percentage }}%</p>
+            <p class="mb-0"><strong>Total Records Logged:</strong> {{ attendance_list|length }} days</p>
+        </div>
+    </div>
+
+    <div class="mt-5 pt-4 border-top text-center text-muted small">
+        This transcript is generated electronically by EduRegistrar Management System and is valid for official academic verification.
+    </div>
+</div>
+
+</body>
+</html>
